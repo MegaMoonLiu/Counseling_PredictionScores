@@ -32,8 +32,8 @@ except Exception:
 @dataclass
 class Config:
     # data & io
-    data_json: str = "./datasets/cot_swallow_P.jsonl"
-    output_root: str = "./outputs/llama3_swallow_8b_qlora_EX"
+    data_json: str = ""
+    output_root: str = ""
     model_id: str = "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3"
 
     # wandb
