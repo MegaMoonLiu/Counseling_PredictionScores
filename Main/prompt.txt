@@ -1,0 +1,111 @@
+# タスク説明
+カウンセラーとクライアントのSNSカウンセリングの対話ログとクライアントによる20項目の評価スコア(0～5点)と3項目の重大な懸念点の有無に関する評価が与えられます．
+それぞれの項目について、クライアントが付けたスコアに基づき，カウンセラーへのフィードバックコメントを記述してください．
+また，カウンセラーの強みに関する総括的なコメントとカウンセラーの改善点に関する総括的なコメントを最後に記述してください．
+
+
+# 評価項目
+## 1. SNSカウンセリングの印象と評価（SNSロールプレイの体験に基づき、以下の観点でカウンセラーの印象を評価）
+### 1-1. 気分・体験
+#### 1-1-1. 肯定感
+- **felt_heard_and_understood** - 聴いてもらえた、理解してもらえたと感じた
+- **felt_respected** - 尊重されたと感じた
+
+#### 1-1-2. 気づき・希望
+- **gained_new_insights** - 新しい気づきや発見があった
+- **felt_hopeful_or_expectant** - 希望や期待を感じられた
+
+### 1-2. 協働作業
+#### 1-2-1. 取り組み
+- **concerns_were_addressed** - 自分が取り組みたい話題を扱えた
+- **thought_through_concerns_together** - 一緒に考えながら進められた
+
+#### 1-2-2. リズムやスムーズさ
+- **conversation_had_good_rhythm** - やり取りのリズムが合っていた
+- **conversation_felt_comfortable** - 居心地の良いやり取りだった
+
+### 1-3. 総合的なクライアント体験の評価 (注: これは個別の体験に関する評価であり、全項目のスコア合計ではありません)
+- **felt_appropriate_and_satisfying** - 全体として適切で良かった
+- **conversation_was_valuable** - 今回の相談は価値があった
+
+## 2. SNSカウンセリングスキルの評価 (カウンセラーのスキルについて、以下の観点で評価)
+### 2-1. 相談の流れの管理
+- **conversation_started_smoothly** - 相談開始がスムーズだった
+- **conversation_ended_well** - 相談終了のタイミングが適切だった
+
+### 2-2. カウンセリングスキル
+- **showed_acceptance_and_empathy** - 受容・共感のスキル (例: 「それはとても辛かったですね」といった共感的な応答)
+- **provided_acknowledgment_and_affirmation** - 肯定・承認のスキル (例: 「お子さんのことを本当に大切に思っているのですね」といった肯定的な応答)
+- **asked_effective_questions** - 的確な質問による会話の促進
+- **summarized_key_points_effectively** - 要約のスキル
+- **clarified_issues_cleraly** - 問題の明確化のスキル (例: 「多忙に感じるのは、新しい業務が多いためかもしれませんね」)
+- **helped_identify_goals** - 相談目標の明確化 (例: 「この相談では、仕事量が多い場合の対処法を考えるということで良いですか？」)
+- **offered_actionable_suggestions** - 次の行動につながる提案
+- **encouraged_and_instilled_hope** - 勇気づけ・希望の喚起 (例: 「きっと大丈夫です。一歩一歩進めていきましょう。」)
+
+## 3. 重大な問題の有無 (問題が合った場合は「チェックあり」ない場合はnullとなります．「チェックあり」の場合はscoreはtrueとし，nullの場合はnullとしてください)
+- **harmful_due_to_ignorance** - 無理解と軽率さによる傷つけ発言があった
+- **other_potentially_unethical** - その他の倫理違反が疑われる発言があった
+- **unwilling_to_continue** - クライアントが途中で離脱した
+
+# 出力形式の指示
+評価結果は、以下のJSON形式で生成してください。
+- ルート要素は一つのJSONオブジェクトです。
+- "evaluation_items" キーの値は、各評価項目に対応するオブジェクトのリストです。
+  - 各評価項目オブジェクトは "id", "reason", "score" の3つのキーを持ちます。
+  - "id" には上記の評価項目IDを文字列で指定してください。
+  - "comment" クライアントが付けたスコアに基づきフィードバックコメントを文字列で記述してください。
+  - "score" には与えられたクライアントの評価スコアをそのまま整数値で記入してください。
+- "strengths" キーの値には、カウンセラーの強みに関する総括的な記述を文字列で指定してください。
+- "areas_for_improvement" キーの値には、カウンセラーの改善点に関する総括的な記述を文字列で指定してください。
+- スコアの合計は計算しないでください。
+
+## 注意点
+- 「スコアが高くなりました」「平均的な評価でした」のようなスコアに直接的に言及する表現はしない
+- 「felt_heard_and_understood」「concerns_were_addressed」などの評価項目名にはコメント中で言及しない
+- 重大な問題の有無の3項目に関しては「チェックあり」の場合のscoreはtrueとし，nullの場合のscoreはnullとしてください
+
+
+# JSON出力例 (構造のみ、内容は適切に生成すること)
+```json
+{
+  "evaluation_items": [
+    {
+      "id": "felt_heard_and_understood",
+      "comment": "クライアントの話を丁寧に聞き、感情の細かな部分にも共感を示していました。また...",
+      "score": 5
+    },
+    {
+      "id": "felt_respected",
+      "comment": "クライアントが自分の気持ちや状況を整理できるよう促し、反抗期の子どもとの関係性や伝え方について新たな視点を提供していましたが、気づきの深さはやや控えめな印象です。",
+      "score": 3
+    },
+    // ... 他の項目についても同様に記述 ...
+    {
+        "id": "harmful_due_to_ignorance",
+        "comment": "特段の問題は確認されませんでした。...",
+        "score": null
+    },
+    {
+        "id": "other_potentially_unethical",
+        "comment": "問題は見当たりませんでした。...",
+        "score": null
+    },
+    {
+        "id": "unwilling_to_continue",
+        "comment": "継続しにくさが感じられたとの回答でした。意味が伝わりにくい比喩や個人的見解が続いた場面で戸惑いが生じた可能性があります。...",
+        "score": true
+    }
+  ],
+  "strengths": "全体を通してクライアントの話を丁寧に聞く姿勢と、XXXが優れていました。特に...",
+  "areas_for_improvement": "一方で、XXXXの場面では、もう少し具体的な提案や介入があっても良かったかもしれません。加えて、..."
+}
+
+
+# 評価対象の対話履歴
+[dialogue_history]
+
+# 評価項目とスコア
+[dialogue_scores]
+
+# 評価結果 (JSON形式)

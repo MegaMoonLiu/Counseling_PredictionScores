@@ -1,0 +1,15 @@
+transformers>=4.43.0
+peft>=0.11.1
+accelerate>=0.33.0
+bitsandbytes>=0.43.1
+datasets>=2.19.0
+sentencepiece
+torch>=2.2.0
+jsonlines
+numpy>=1.24.0
+tqdm
+scikit-learn
+wandb
+trl==0.9.6
+peft>=0.11
+bitsandbytes
