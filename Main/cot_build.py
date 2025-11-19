@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 EVAL_COUNT = 20
-SRC_DEFAULT = Path("./datasets/All_data_EX_Part_P.json")
-OUT_DEFAULT = Path("./datasets/cot_swallow_P.jsonl")
+SRC_DEFAULT = Path()
+OUT_DEFAULT = Path()
 MODEL_DEFAULT = "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3"
 
 SYS_PROMPT = (
