@@ -32,7 +32,8 @@ KokoroChat を収集し，スコア予測モデルを構築「Qi+ 2025」
  	- CoT（Chain-of-Thought）形式の推論により，スコア予測の精度向上が期待できる
 
 # 提案アプローチ: 説明誘導型スコア予測
-評価理由の説明⽂を⽣成した上でスコアを予測する⼿法
+## 評価理由の説明⽂を⽣成した上でスコアを予測する⼿法
+![評価理由の説明⽂を⽣成した上でスコアを予測する⼿法](/Asset/Approach.png)
 - Step 1
 GPT-5に対し，カウンセリング対話履歴と20項⽬のクライアント
 評価スコアを⼊⼒• 各スコアに対応する理由説明⽂を⽣成
@@ -41,3 +42,27 @@ Step1で構築した説明⽂付き
 データを⽤い，CoT形式でLLMを学習
   - ⼊⼒	対話履歴
   - 出⼒  「理由 -> スコア」の順で，20項⽬について予測
+
+ # これからやること
+- [ ] 実験1: ⾃動評価実験
+  - ⽬的: 説明⽂がスコア予測精度の向上に寄与するかを検証
+  - 評価指標: KokoroChatと同⼀の指標を使⽤ [Qi+2025]
+    - ACC 正解スコアとの⼀致率
+    - ACCsoft ±1点差までを許容する柔軟な⼀致率
+    - MAE 平均絶対誤差
+- [ ] 実験2: ⼈間評価実験
+  - ⽬的: 説明⽂がカウンセラーの理解促進・改善⽀援に役⽴つかを検証
+  - 評価条件
+    - スコアのみ提⽰
+    - スコア ＋ 理由説明⽂を提⽰
+    - 被験者は2条件で主観的評価を実施
+
+# 	関連研究
+- [Can Large Language Models be Used to Provide Psychological Counselling? An Analysis of GPT-4-Generated Responses Using Role-play Dialogues](https://arxiv.org/abs/2402.12738)  
+同一状況下での人間カウンセラーの応答とGPT-4が生成した応答の適切性を評価した
+- [Understanding Client Reactions in Online Mental Health Counseling](https://aclanthology.org/2023.acl-long.577/)  
+実際のオンライン相談記録を用いて、部分的なクライアント評価が付与されている
+- [KokoroChat: A Japanese Psychological Counseling Dialogue Dataset Collected via Role-Playing by Trained Counselors.](https://aclanthology.org/2025.acl-long.608/)  
+人手収集による日本語心理相談データセット
+- [ESCoT: Towards Interpretable Emotional Support Dialogue Systems](https://aclanthology.org/2024.acl-long.723/)  
+説明駆動型評価フレームワーク
