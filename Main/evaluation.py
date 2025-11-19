@@ -192,7 +192,7 @@ def print_confusion_matrices(summary: EvalSummary) -> None:
 
 
 def main() -> None:
-    path = Path("./gen_results/results_llama_.json")  # 评价生成的结果
+    path = Path("")  # 评价生成的结果
     data = json.loads(path.read_text(encoding="utf-8"))
 
     pred_key = "output_model"
