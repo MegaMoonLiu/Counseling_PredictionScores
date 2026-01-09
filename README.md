@@ -68,11 +68,11 @@ Step1で構築した説明⽂付き
 ![MAE](/Asset/CoT_vs_Paper_MAE.png)
 ```
 ACCsoft (↑): D6 | |Δ|=6.01 | Δ(CoT-Paper)=-6.01 | CoT=77.7 | Paper=83.71
- MAE (↓): D6 | |Δ|=0.1464 | Δ(CoT-Paper)=0.1464 | CoT=0.971 | Paper=0.8246
+MAE (↓): D6 | |Δ|=0.1464 | Δ(CoT-Paper)=0.1464 | CoT=0.971 | Paper=0.8246
  
- === Max gap dimension overall (sum of abs gaps across 3 metrics) ===
- D6: sum(|Δ|)=12.1964
- per-metric |Δ|={'ACC (↑)': 6.039999999999999, 'ACCsoft (↑)': 6.009999999999991, 'MAE (↓)': 0.14639999999999997}
+=== Max gap dimension overall (sum of abs gaps across 3 metrics) ===
+D6: sum(|Δ|)=12.1964
+per-metric |Δ|={'ACC (↑)': 6.039999999999999, 'ACCsoft (↑)': 6.009999999999991, 'MAE (↓)': 0.14639999999999997}
 ```
 
 ###  Case Study
