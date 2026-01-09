@@ -77,7 +77,7 @@ def plot_grouped_bars(pivoted: pd.DataFrame, metric: str, out_path: Path) -> Non
 def main() -> None:
     # 绘制图表
     excel_path = Path("./gen_results/evaluation.xlsx")
-    out_dir = Path("./plot")
+    out_dir = Path("")
 
     df = load_and_clean(excel_path)
     dim_order = infer_dim_order(df)
