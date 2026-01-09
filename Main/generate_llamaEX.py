@@ -67,12 +67,12 @@ seed = 32
 class ConfigInfer:
     # model
     base_model_id: str = "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3"
-    adapter_dir: str = f"./outputs/llama3_swallow_8b_qlora_EX_All_V3.0/evalgen-s{seed}"
+    adapter_dir: str = f""
     use_4bit: bool = True
 
     # data的路径
-    input_json: str = "./datasets/test_data_Part.json"
-    out_json: str = f"./gen_results/predictions-s{seed}.json"
+    input_json: str = ""
+    out_json: str = f""
 
     # 参数
     max_new_tokens: int = 192
