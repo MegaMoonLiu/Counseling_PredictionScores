@@ -1,11 +1,14 @@
+import os
+import json
 import random
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
-import torch
-import numpy as np
+from typing import List, Dict, Any, Iterable, Tuple
 
-from datasets import load_dataset
+import numpy as np
+import torch
+
+from datasets import load_dataset, Dataset, DatasetDict
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
@@ -29,22 +32,49 @@ except Exception:
 # ----------------------------
 @dataclass
 class Config:
-    # data & io
+    # IO / data
     data_json: str = ""
     output_root: str = ""
     model_id: str = "tokyotech-llm/Llama-3.1-Swallow-8B-Instruct-v0.3"
 
-    # wandb
-    project: str = "llama3-qlora_train_EX_Part_lr1e-3_adamw_torch_fused_warmup0.03"
-    run_group: str = "qLoRA-multiseed"
-    run_name: str = "exp"  # final run name = f"{run_name}-s{seed}"
+    # task
+    eval_item_titles: List[str] = field(
+        default_factory=lambda: [
+            "聴いてもらえた、わかってもらえたと感じた",
+            "尊重されたと感じた",
+            "新しい気づきや体験があった",
+            "希望や期待を感じられた",
+            "取り組みたかったことを扱えた",
+            "一緒に考えながら取り組めた",
+            "やりとりのリズムがあっていた",
+            "居心地のよいやりとりだった",
+            "全体として適切でよかった",
+            "今回の相談は価値があった",
+            "相談開始の円滑さ",
+            "相談終了のタイミング（不必要に聴きすぎていないか）、円滑さ",
+            "受容・共感のスキル（例「それはとても辛かったですね」）",
+            "肯定・承認のスキル（例「大切に思っているのですね」）",
+            "的確な質問による会話の促進",
+            "要約のスキル",
+            "問題の明確化（例「新しい業務が多いためかも」）",
+            "この相談での目標の明確化（例「この相談では〜で良いですか？」）",
+            "次の行動につながる提案",
+            "勇気づけ・希望の喚起（例「一歩一歩進めましょう」）",
+        ]
+    )
 
-    # seeds & schedule
-    seeds: List[int] = field(default_factory=lambda: [4, 8, 12, 16])
-    epochs: int = 6
-    lr: float = 1e-3  # 1e-3, 1e-4, 2e-4, 2e-5, 5e-4, 5e-5
+    # wandb
+    project: str = "llama3_swallow_8b_qlora_EX_All_V3.0"
+    run_group: str = "qLoRA-multiseed"
+    run_name: str = "evalgen"  # final run name = f"{run_name}-s{seed}"
+
+    # seeds & schedules
+    seeds: List[int] = field(default_factory=lambda: [42])
+    # [2, 12, 22, 32, 42]
+    epochs: int = 3
+    lr: float = 1e-4
     weight_decay: float = 0.0
-    warmup_ratio: float = 0.03  # 0.01, 0.03, 0.05, 0.07, 0.09
+    warmup_ratio: float = 0.03
 
     # batches
     per_device_train_batch_size: int = 1
@@ -87,7 +117,6 @@ class Config:
 # ----------------------------
 # Utils
 # ----------------------------
-# 设置seed
 def seed_all(seed: int) -> None:
     set_seed(seed)
     random.seed(seed)
@@ -96,20 +125,16 @@ def seed_all(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
-# dtype 选择 _compute_dtype 确保量化运算稳定、减少溢出
 def _compute_dtype(dtype_str: str):
-    if dtype_str.lower() in ("bf16", "bfloat16"):
+    s = (dtype_str or "").lower()
+    if s in ("bf16", "bfloat16"):
         return torch.bfloat16
-    if dtype_str.lower() in ("fp16", "float16", "half"):
+    if s in ("fp16", "float16", "half"):
         return torch.float16
     return torch.bfloat16
 
 
-# 注意力后端
 def select_attn_backend(model, pref: str) -> str:
-    """
-    Returns the effective attention backend set on model.config.attn_implementation.
-    """
     backend = None
     pref = (pref or "auto").lower()
     try:
@@ -141,7 +166,6 @@ def select_attn_backend(model, pref: str) -> str:
     return backend
 
 
-# 分词器
 def build_tokenizer(model_id: str, max_len: int):
     tok = AutoTokenizer.from_pretrained(model_id, use_fast=True)
     if tok.pad_token is None and hasattr(tok, "eos_token"):
@@ -151,19 +175,18 @@ def build_tokenizer(model_id: str, max_len: int):
     return tok
 
 
-# RoPE/序列守护
 def rope_and_seq_guard(model, tokenizer, max_seq_len: int) -> int:
     max_pos = getattr(model.config, "max_position_embeddings", None)
     eff_seq_len = min(int(max_seq_len), int(max_pos)) if max_pos else int(max_seq_len)
     if getattr(model.config, "rope_scaling", None) and eff_seq_len <= (
         max_pos or eff_seq_len
     ):
+        # 防止不必要的 rope_scaling 导致退化
         model.config.rope_scaling = None
     tokenizer.model_max_length = eff_seq_len
     return eff_seq_len
 
 
-# 模型加载
 def load_model(model_id: str, use_4bit: bool, compute_dtype: torch.dtype):
     quant_cfg = None
     torch_dtype = None
@@ -185,7 +208,6 @@ def load_model(model_id: str, use_4bit: bool, compute_dtype: torch.dtype):
     return model
 
 
-# 设置聊天模板
 def make_formatting_func(tok):
     def _fmt(batch):
         msgs_batch = batch["messages"]
@@ -207,12 +229,8 @@ def make_formatting_func(tok):
     return _fmt
 
 
-# 设置W&B 样本回调
 class WandbSamplesCallback:
-    """
-    After the last epoch, log a few raw formatted samples.
-    Why: light sanity-checking in UI.
-    """
+    """Log several formatted samples after training for sanity check."""
 
     def __init__(self, project_on: bool, sample_rows: int):
         self.on = project_on
@@ -234,19 +252,12 @@ class WandbSamplesCallback:
                 tbl.add_data(idxs[i], t[:2048])
             wandb.log({"samples": tbl, "epoch": epoch}, step=step)
         except Exception:
-            pass  # ignore logging error
+            pass
 
 
-# SFT 配置版本兼容
 def make_sft_config_version_safe(
     cfg: Config, eff_seq_len: int, out_dir: Path
 ) -> SFTConfig:
-    """
-    Robust runtime fallback:
-    - Prefer new key `eval_strategy`.
-    - If TypeError complains about it, swap to `evaluation_strategy` and retry.
-    - If it complains about `evaluation_strategy`, swap back to `eval_strategy`.
-    """
     common = dict(
         output_dir=str(out_dir),
         num_train_epochs=cfg.epochs,
@@ -271,36 +282,106 @@ def make_sft_config_version_safe(
         report_to=(
             [cfg.report_to] if (cfg.report_to and cfg.report_to != "none") else []
         ),
-        run_name=cfg.run_name,  # seed will be appended later
+        run_name=cfg.run_name,
         push_to_hub=False,
     )
-
-    # 1st attempt: new name
     kwargs = dict(common, eval_strategy=cfg.eval_strategy)
     try:
         return SFTConfig(**kwargs)
     except TypeError as e1:
         msg = str(e1)
-        # If it failed due to eval_strategy being unexpected, try old name
         if "eval_strategy" in msg and "unexpected" in msg:
             kwargs_old = dict(common, evaluation_strategy=cfg.eval_strategy)
             try:
                 return SFTConfig(**kwargs_old)
             except TypeError as e2:
-                # If even old name is unexpected, re-raise first error for clarity
                 raise e1
-        # If it complained about evaluation_strategy (some wrappers rephrase), try new name explicitly
         if "evaluation_strategy" in msg and "unexpected" in msg:
             kwargs_new = dict(common, eval_strategy=cfg.eval_strategy)
             return SFTConfig(**kwargs_new)
-        # Unknown TypeError: re-raise
         raise
 
 
-# 按照seed进行train
+# ----------------------------
+# Data preprocessing
+# ----------------------------
+SYS_PROMPT = """
+# タスク説明
+あなたには、以下が与えられます。
+- カウンセラーとクライアントのSNSカウンセリング対話ログ
+- クライアントによる20項目の評価タイトル
+あなたの目的は、対話ログに基づいて「クライアントの実際の採点（0〜5）に最も近い推定」を行い、
+各項目について推定理由を作成したうえでスコアを出力することです。
+
+# 手順（厳守）
+各項目ごとに必ず以下の順で出力する：
+1) 日本語で簡潔な感想（1〜3文）：丁寧・具体・行動と感情に言及し、対話で観測できる根拠に寄せる
+2) その項目のスコア（0〜5の整数）を決めて出力
+
+## スコア基準（目安）
+- 0 = 非常に低い
+- 3 = 中立
+- 5 = 非常に高い
+
+# 出力フォーマット（厳守）
+各項目の出力は **必ず次の2行** とする：
+理由: <テキスト>
+スコア: <タイトル>=<整数>
+
+## 出力上の注意
+- 評価は「助言的」で「非断定」。
+- スコア根拠は感想に自然に反映する（説明しすぎない）。
+- 過度な自己開示は避ける。
+"""
+
+
+def explode_examples(raw_ds: Dataset, titles: List[str]) -> Dataset:
+    """Expand one raw row into 20 labeled training samples with chat messages."""
+    records: List[Dict[str, Any]] = []
+    for row in raw_ds:
+        conv: str = row.get("input", "")
+        for i, title in enumerate(titles, start=1):
+            ev_key = f"evaluation_items_{i}"
+            out_key = f"output_{i}"
+            if ev_key not in row or out_key not in row:
+                continue  # skip if missing
+            gold_comment = str(row[ev_key]).strip()
+            gold_score = str(
+                row[out_key]
+            ).strip()  # e.g., "聴いてもらえた、わかってもらえたと感じた=4"
+
+            user_prompt = (
+                f"評価項目タイトル: {title}\n"
+                f"対話履歴:\n{conv}\n\n"
+                "上記の内容に基づき、理由とスコアを出力してください。"
+            )
+            assistant_resp = f"理由: {gold_comment}\nスコア: {gold_score}"
+
+            messages = [
+                {"role": "system", "content": SYS_PROMPT},
+                {"role": "user", "content": user_prompt},
+                {"role": "assistant", "content": assistant_resp},
+            ]
+            records.append({"messages": messages})
+    return Dataset.from_list(records)
+
+
+def load_and_prepare_dataset(
+    json_path: str, titles: List[str], eval_split: float, seed: int
+) -> Tuple[Dataset, Dataset]:
+    raw = load_dataset("json", data_files=json_path)["train"]
+    ds = explode_examples(raw, titles)
+    if eval_split and 0.0 < eval_split < 1.0:
+        split = ds.train_test_split(test_size=eval_split, seed=seed, shuffle=True)
+        return split["train"], split["test"]
+    return ds, None
+
+
+# ----------------------------
+# Train per seed
+# ----------------------------
 def train_one_seed(cfg: Config, seed: int) -> Path:
     seed_all(seed)
-
     out_dir = Path(cfg.output_root) / f"{cfg.run_name}-s{seed}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -337,19 +418,15 @@ def train_one_seed(cfg: Config, seed: int) -> Path:
         ],
     )
     model = get_peft_model(model, lora_cfg)
-    model.enable_input_require_grads()
+    model.enable_input_require_grads()  # why: stable adapters with k-bit
 
     data_path = Path(cfg.data_json)
     if not data_path.exists():
-        raise FileNotFoundError(f"未找到数据: {data_path}")
+        raise FileNotFoundError(f"データが見つかりません: {data_path}")
 
-    raw = load_dataset("json", data_files=str(data_path))["train"]
-    if cfg.eval_split and 0.0 < cfg.eval_split < 1.0:
-        split = raw.train_test_split(test_size=cfg.eval_split, seed=seed)
-        ds_train, ds_eval = split["train"], split["test"]
-    else:
-        ds_train, ds_eval = raw, None
-
+    ds_train, ds_eval = load_and_prepare_dataset(
+        str(data_path), cfg.eval_item_titles, cfg.eval_split, seed
+    )
     fmt_func = make_formatting_func(tok)
 
     sft_args = make_sft_config_version_safe(cfg, eff_seq_len, out_dir)
@@ -371,6 +448,7 @@ def train_one_seed(cfg: Config, seed: int) -> Path:
                 "optim": cfg.optim,
                 "attn_impl": backend,
                 "use_4bit": cfg.use_4bit,
+                "samples": len(ds_train),
             },
             dir=str(out_dir),
         )
@@ -405,7 +483,7 @@ def train_one_seed(cfg: Config, seed: int) -> Path:
     if _WANDB_AVAILABLE and cfg.report_to == "wandb":
         wandb.finish()
 
-    print(f"[OK] 模型/LoRA 已保存: {out_dir.resolve()}")
+    print(f"[OK] LoRA アダプタ/トークナイザを保存しました: {out_dir.resolve()}")
     return out_dir
 
 
@@ -413,6 +491,24 @@ def train_many(cfg: Config) -> None:
     for s in cfg.seeds:
         print(f"\n===== Seed {s} =====")
         train_one_seed(cfg, s)
+
+
+# ----------------------------
+# Inference helper (optional)
+# ----------------------------
+INFER_SYSTEM = SYS_PROMPT
+
+
+def build_infer_messages(title: str, dialogue: str) -> List[Dict[str, str]]:
+    user_prompt = (
+        f"評価項目タイトル: {title}\n"
+        f"対話履歴:\n{dialogue}\n\n"
+        "上記の内容に基づき、感想とスコアを出力してください。"
+    )
+    return [
+        {"role": "system", "content": INFER_SYSTEM},
+        {"role": "user", "content": user_prompt},
+    ]
 
 
 if __name__ == "__main__":
