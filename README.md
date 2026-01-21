@@ -53,10 +53,11 @@ Step1で構築した説明⽂付き
 ## 結果
 |   | Accuracy(↑) | Soft Accuracy(↑) | MAE(↓) |
 | ------------- | ------------- | ------------- | ------------- |
-| Overall (CoT)   | 0.346  |  0.815  |  0.874  |
+| Llama-3.1   | 0.287  |  0.7253  |  1.0540  |
 | Paper  | 0.3535  | 0.8364  | 0.8283  |
+| Overall (CoT)   | 0.346  |  0.815  |  0.874  |
 -  CoT　ours
--  Paper [Qi+2025]
+-  Paper [Qi+2025] Llama-3.1 Fine-tuning
 
 ###  ACC
 ![ACC](/Asset/CoT_vs_Paper_ACC.png)
