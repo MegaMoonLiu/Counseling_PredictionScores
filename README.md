@@ -151,3 +151,8 @@ per-metric |Δ|={'ACC (↑)': 6.039999999999999, 'ACCsoft (↑)': 6.009999999999
 人手収集による日本語心理相談データセット
 - [ESCoT: Towards Interpretable Emotional Support Dialogue Systems](https://aclanthology.org/2024.acl-long.723/)  
 説明駆動型評価フレームワーク
+
+# 	研究実績
+##  国内学会（査読なし）
+- **Yueliang Liu**, Zhiyang Qi, Michimasa Inaba: [Explanation-Guided Prediction of Multi-Dimensional Feedback Scores in Psychological Counseling Dialogues.](https://aclanthology.org/2024.acl-long.723/)
+ 第105回言語・音声理解と対話処理研究会(第16回対話システムシンポジウム), 人工知能学会研究会資料言語・音声理解と対話処理研究会, Vol.105, pp.7-11, 2025.
