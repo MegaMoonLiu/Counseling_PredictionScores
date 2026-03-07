@@ -74,8 +74,8 @@ MAE (↓): D6 | |Δ|=0.1464 | Δ(CoT-Paper)=0.1464 | CoT=0.971 | Paper=0.8246
 === Max gap dimension overall (sum of abs gaps across 3 metrics) ===
 D6: sum(|Δ|)=12.1964
 per-metric
-|Δ|ACC(↑)=6.039999999999999,
-|Δ|ACCsoft(↑)=6.009999999999991,
+|Δ|ACC(↑)=6.039999999999999
+|Δ|ACCsoft(↑)=6.009999999999991
 |Δ|MAE(↓)=0.14639999999999997
 ```
 
