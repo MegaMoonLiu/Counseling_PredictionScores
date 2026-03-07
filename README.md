@@ -1,4 +1,4 @@
-<img width="336" height="62" alt="image" src="https://github.com/user-attachments/assets/5c0c24d0-edd1-46f9-adb0-73145e4953b5" /># Explanation-Guided Prediction of Multi-Dimensional Feedback Scores in Psychological Counseling Dialogues
+Explanation-Guided Prediction of Multi-Dimensional Feedback Scores in Psychological Counseling Dialogues
 
 # 背景
 世界では約8⼈に1⼈が精神疾患を抱えている 「WHO, 2022」
