@@ -1,5 +1,10 @@
 # Explanation-Guided Prediction of Multi-Dimensional Feedback Scores in Psychological Counseling Dialogues
 
+<p align="center">
+  <a href="README.md"><img alt="日本語" height="20" src="https://img.shields.io/badge/日本語-BCDCF7"></a>&nbsp;
+  <a href="README_zh.md"><img alt="简体中文" height="20" src="https://img.shields.io/badge/简体中文-CDCFD4"></a>&nbsp;
+</p>
+
 # 背景
 世界では約8⼈に1⼈が精神疾患を抱えている 「WHO, 2022」
 しかし，カウンセラーは深刻に不⾜しており，養成が急務
@@ -56,7 +61,7 @@ Step1で構築した説明⽂付き
 | Llama-3.1   | 0.287  |  0.7253  |  1.0540  |
 | Paper  | 0.3535  | 0.8364  | 0.8283  |
 | Overall (CoT)   | 0.346  |  0.815  |  0.874  |
--  CoT　ours
+-  CoT　Ours
 -  Paper [Qi+2025] Llama-3.1 Fine-tuning
 
 ###  ACC
@@ -91,11 +96,14 @@ per-metric
 | Reference | 3 |
 
 EGSP の予測スコアが正解スコアと一致
+
 モデルはスコアの根拠を適切に言語化でき
+
 実際の評価プロセスをシミュレートしている
 
 
 - 例②：わずかなズレを含む解釈
+
 一部項目で予測スコアと人手ラベルに1点のズレあり
 
 | Field | Content |
