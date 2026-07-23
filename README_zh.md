@@ -161,6 +161,6 @@ EGSP 的预测评分与真实评分一致
 解释驱动型评估框架
 
 # 	研究业绩
-##  日本国内学会
+##  日本学会
 - **Yueliang Liu**, Zhiyang Qi, Michimasa Inaba: [Explanation-Guided Prediction of Multi-Dimensional Feedback Scores in Psychological Counseling Dialogues.](https://aclanthology.org/2024.acl-long.723/)
  第105回言語・音声理解と対話処理研究会(第16回対話システムシンポジウム), 人工知能学会研究会資料言語・音声理解と対話処理研究会, Vol.105, pp.7-11, 2025.
